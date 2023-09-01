@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Field {
   meta: Meta;
@@ -46,16 +46,38 @@ interface Comment {
 
 const defaultContent: Content | null = null;
 
-function useContent() {
+function useContent(location: string[] | null) {
   const [content, setContent] = useState<Content |  null>(defaultContent);
-  
+  useEffect(() => {
+    if (location !== null) {
+      fetchContent(location).then(setContent)
+    }
+  }, [JSON.stringify(location)])
   return content;
 }
 
+async function fetchContent(location: string[]) {
+  const url = "https://api.brass.software/" + location.join("/")
+  const res = await fetch(url)
+  return await res.json();
+}
+
+function useLocation(): string[] | null {
+  const [location, setLocation] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const loc = window.location.hostname + window.location.pathname;
+      setLocation(loc.split("/").filter(Boolean))
+    }
+  }, []);
+  return location;
+}
+
 function App() {
-  const content = useContent();
+  const location = useLocation();
+  const content = useContent(location);
   if (content === null) {
-    return <div className="text-red-500">Loading!!!...</div>;
+    return <div className="">Loading {JSON.stringify(location)}...</div>;
   }
 
   return (
